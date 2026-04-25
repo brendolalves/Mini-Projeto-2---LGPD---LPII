@@ -1,8 +1,20 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, DateTime, insert, text
 from datetime import datetime
 
 import time
 from functools import wraps
+
+load_dotenv()
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+
+
 def medir_tempo(func):
     """Decorator que mede o tempo de execução de uma função."""
     @wraps(func)
@@ -15,7 +27,8 @@ def medir_tempo(func):
         return resultado
     return wrapper
 
-engine = create_engine("postgresql+psycopg2://alunos:AlunoFatec@200.19.224.150:5432/atividade2", echo=False)
+DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+engine = create_engine(DATABASE_URL, echo=False)
 metadata = MetaData()
 
 usuarios = Table(
