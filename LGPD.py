@@ -103,6 +103,24 @@ def csv_anual_oculto():
             print(f"Erro ao criar arquivo '{nome_arquivo}': {e}")
 
 
+# CSV geral com os dados limpos (nome e CPF)
+def csv_geral():
+    nome_arquivo = 'todos.csv'
+
+    query = text("SELECT nome, cpf FROM usuarios;") #consulta SQL para selecionar apenas os campos nome e CPF da tabela usuarios
+    result = conn.execute(query) 
+
+    try: #tenta criar o arquivo CSV e escrever os dados nome e CPF
+        with open(nome_arquivo, mode='w', newline="", encoding='utf-8') as f:
+            escritor = csv.writer(f)
+            escritor.writerow(['nome', 'cpf'])
+            for row in result:
+                escritor.writerow([row.nome, row.cpf])
+        
+        print(f"Sucesso: Arquivo '{nome_arquivo}' criado com os dados nome e CPF.")
+
+    except Exception as e:
+        print(f"Erro ao criar arquivo '{nome_arquivo}': {e}")
 
 
 users = []
