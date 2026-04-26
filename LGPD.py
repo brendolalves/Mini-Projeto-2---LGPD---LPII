@@ -1,12 +1,12 @@
-import os
+import os, time, csv
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, DateTime, insert, text
 from datetime import datetime
-
-import time
 from functools import wraps
 
 load_dotenv()
+
+
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -47,7 +47,28 @@ metadata.create_all(engine)
 
 @medir_tempo
 def LGPD(row):
-    return row
+    row_list = list(row) #converte a tupla em lista para permitir modificações
+
+    # mascarar o nome, mantendo a primeira letra e o sobrenome
+    nome_completo = row_list[1].split()
+    primeira_letra= nome_completo[0][0] if nome_completo else ""
+    primeiro_nome = nome_completo[0] 
+    sobrenome = " ".join(nome_completo[1:]) if len(nome_completo) > 1 else ""
+    row_list[1] = primeira_letra + ("*" * (len(primeiro_nome) - 1)) + (" " + sobrenome if sobrenome else "")
+
+    # mascarar o CPF, mantendo os 4 primeiros dígitos e substituindo os demais por asteriscos
+    row_list[2] = row_list[2][:4] +"***.***-**"
+
+    # mascrar o email, ocutando o prefixo, mantendo apenas a primeira letra e o domínio
+    email = row_list[3]
+    prefixo, dominio = email.split("@")
+    row_list[3] = prefixo[0] + ("*" * (len(prefixo) - 1)) + "@" + dominio
+
+    # ocultar os dígitos do telefone, mantendo apenas os 4 últimos dígitos
+    row_list[4] = row_list[4][-4:]
+
+    return tuple(row_list)
+
 
 users = []
 with engine.connect() as conn:
