@@ -1,4 +1,5 @@
 import os, time, csv
+from collections import defaultdict
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, DateTime, insert, text
 from datetime import datetime
@@ -68,6 +69,40 @@ def LGPD(row):
     row_list[4] = row_list[4][-4:]
 
     return tuple(row_list)
+
+
+@medir_tempo
+# CSV anuais com os dados anonimizados
+def csv_anual_oculto():
+
+    registros_por_ano = defaultdict(list) #dicionário para armazenar os registros agrupados por ano de nascimento
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT * FROM usuarios;")) #seleciona todos os registros da tabela usuarios
+        
+
+        #percorre os registros, anonimiza os dados e agrupa por ano de nascimento
+        for row in result:
+            row_anonimizado = LGPD(row)
+            campo_data = row[5]
+            try: #tenta extrair o ano diretamente do campo_data, caso seja um objeto datetime
+                ano = campo_data.year
+            except AttributeError: #caso o campo_data seja uma string, converte para datetime e extrai o ano
+                ano = datetime.strptime(campo_data, "%Y-%m-%d").year
+            registros_por_ano[ano].append(row_anonimizado)
+    
+    #gera um arquivo CSV para cada ano de nascimento, contendo os registros anonimizados correspondentes
+    for ano, dados in registros_por_ano.items():
+        nome_arquivo = f'{ano}.csv'
+        try: #tenta criar o arquivo CSV e escrever os dados anonimizados
+            with open(nome_arquivo, mode = 'w', newline='', encoding='utf-8') as f:
+                escritor = csv.writer(f)
+                escritor.writerow(['id', 'nome', 'cpf', 'email', 'telefone', 'data_nascimento', 'created_on', 'updated_on'])
+                escritor.writerows(dados)
+            print(f"Sucesso: Arquivo '{nome_arquivo}' criado com {len(dados)} registros.")
+        except Exception as e: 
+            print(f"Erro ao criar arquivo '{nome_arquivo}': {e}")
+
+
 
 
 users = []
